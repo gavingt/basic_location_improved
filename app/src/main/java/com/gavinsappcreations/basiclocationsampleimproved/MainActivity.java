@@ -59,11 +59,13 @@ import com.google.android.gms.tasks.Task;
 
 import java.util.Locale;
 
-/**
- * Location sample.
- * <p>
- * Demonstrates use of the Location API to retrieve the last known location for a device.
- */
+/*
+Press a button and get the device's current location.
+This improves upon the Basic Location Sample in Google's android-play-location sample (https://github.com/googlesamples/android-play-location)
+in a few ways. It checks the device's location setting before requesting a location, and does so while still allowing
+ "device only" location mode. It also ensures that a stale location is never returned by FusedLocationProvider.
+*/
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -94,11 +96,12 @@ public class MainActivity extends AppCompatActivity {
         mLongitudeText = findViewById((R.id.longitude_text));
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        //This callback gets called every time FusedLocationProvider receives a new location.
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
-
                 onNewLocation(locationResult.getLastLocation());
             }
         };
@@ -108,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
         mLocationRequest.setInterval(LOCATION_UPDATE_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
+        //When user presses the button, we request location permission and subsequently request location updates.
         findViewById(R.id.request_location_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -132,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             //We've added a lot of code here to verify that the user's location settings are sufficient for the location request we're about to make.
-            //The below 5 lines are a dummy locationRequest that must be fed into the Builder below. Otherwise, when GPS is turned back on it won't work right.
+            //The below 4 lines are a dummy locationRequest that must be fed into the Builder below. Otherwise, when GPS is turned back on it won't work correctly.
             LocationRequest locationRequest;
             locationRequest = LocationRequest.create();
             locationRequest.setInterval(2000).setFastestInterval(1000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -183,8 +187,6 @@ public class MainActivity extends AppCompatActivity {
         mNewLocationReceivedCount++;
 
         if (location.hasAccuracy() && location.getAccuracy() <= MINIMUM_ACCURACY_IN_METERS && mNewLocationReceivedCount > 1) {
-            //If app is not currently on screen, remove location updates as soon as we get an acceptable geocode.
-
             //Since we've received an acceptable location, set the count back to 0 to get ready for next time.
             mNewLocationReceivedCount = 0;
 
@@ -220,11 +222,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Shows a {@link Snackbar} using {@code text}.
-     *
-     * @param text The Snackbar text.
-     */
+
     private void showSnackbar(final String text) {
         View container = findViewById(R.id.main_activity_container);
         if (container != null) {
@@ -259,8 +257,7 @@ public class MainActivity extends AppCompatActivity {
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.ACCESS_FINE_LOCATION);
-
-
+        
         // Provide an additional rationale to the user. This would happen if the user denied the
         // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
